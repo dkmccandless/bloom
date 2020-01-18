@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math/bits"
 )
 
@@ -77,14 +78,24 @@ func (f *Filter) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary unmarshals a binary representation of a Filter and stores the representation in f.
-// It overwrites any existing data in f.
+// If the size of the unmarshaled Filter in bytes is not a power of 2 in the range [1, 8192]
+// or the unmarshaled number of hash values is not in the range [1, 16],
+// UnmarshalBinary returns an error without modifying the contents of f.
+// Otherwise, it overwrites any existing data in f and returns nil.
 // UnmarshalBinary satisfies the encoding.BinaryUnmarshaler interface.
 func (f *Filter) UnmarshalBinary(data []byte) error {
 	l := len(data)
 	if l == 0 {
-		return errors.New("MarshalBinary: empty data slice")
+		return errors.New("UnmarshalBinary: empty data slice")
+	}
+	if bits.OnesCount(uint(l-1)) != 1 {
+		return fmt.Errorf("UnmarshalBinary: Filter size %v bytes not a power of 2", l-1)
+	}
+	k := int(data[l-1])
+	if k <= 0 || k > 16 {
+		panic("UnmarshalBinary: Number of hash values out of range")
 	}
 	f.f = append(make([]byte, 0, l-1), data[:l-1]...)
-	f.k = int(data[l-1])
+	f.k = k
 	return nil
 }
