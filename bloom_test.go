@@ -106,7 +106,7 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-func TestContains(t *testing.T) {
+func TestMaybeContains(t *testing.T) {
 	s := []string{"a", "b", "c", "d", "e", "f", "g", "h"}
 	for _, f := range []*Filter{
 		// Test filters must be big enough to avoid collisions with high probability
@@ -117,8 +117,8 @@ func TestContains(t *testing.T) {
 	} {
 		for n := 0; n <= len(s); n++ {
 			for i := range s {
-				if got := f.Contains([]byte(s[i])); got != (i < n) {
-					t.Errorf("TestContains(%v, %v: %v, %v); got %v, want %v", len(f.f), f.k, n, i, got, i < n)
+				if got := f.MaybeContains([]byte(s[i])); got != (i < n) {
+					t.Errorf("TestMaybeContains(%v, %v: %v, %v); got %v, want %v", len(f.f), f.k, n, i, got, i < n)
 				}
 			}
 			if n < len(s) {

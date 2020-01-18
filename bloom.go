@@ -43,9 +43,9 @@ func New(b, k int) *Filter {
 	return &Filter{make([]byte, b), k}
 }
 
-// Insert inserts data into f's set.
-func (f *Filter) Insert(data []byte) {
-	hash := sha256.Sum256(data)
+// Insert inserts item into f's set.
+func (f *Filter) Insert(item []byte) {
+	hash := sha256.Sum256(item)
 	for h := 0; h < f.k; h++ {
 		// i is constructed from two bytes, limiting filter size to 2^16 bits.
 		// The factor of 2 also limits f.k to 16 hash values.
@@ -54,11 +54,11 @@ func (f *Filter) Insert(data []byte) {
 	}
 }
 
-// Contains reports whether data is in f's set.
-// If Contains returns true, a false positive is possible,
-// but if Contains returns false, data is definitely not in the set.
-func (f *Filter) Contains(data []byte) bool {
-	hash := sha256.Sum256(data)
+// MaybeContains reports whether item is probably in f's set.
+// If MaybeContains returns true, a false positive is possible,
+// but if MaybeContains returns false, item is definitely not in the set.
+func (f *Filter) MaybeContains(item []byte) bool {
+	hash := sha256.Sum256(item)
 	for h := 0; h < f.k; h++ {
 		// i is constructed from two bytes, limiting filter size to 2^16 bits.
 		// The factor of 2 also limits f.k to 16 hash values.
