@@ -133,7 +133,6 @@ var marshalTests = []struct {
 	data []byte
 }{
 	{New(1, 1), []byte{0, 1}},
-	{New(1, 1), []byte{0, 1}},
 	{New(4, 1), []byte{0, 0, 0, 0, 1}},
 	{New(4, 3), []byte{0, 0, 0, 0, 3}},
 	{&Filter{f: []byte{255}, k: 4}, []byte{255, 4}},
