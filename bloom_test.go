@@ -84,21 +84,16 @@ func TestInsert(t *testing.T) {
 			New(8192, 16),
 		} {
 			// Construct a map of precisely the bits that should be set
-			m := make(map[int]struct{})
+			m := make(map[int]int)
 			for i := 0; i < f.k; i++ {
 				n := int(test.h[i]) & (len(f.f)*8 - 1)
-				m[n] = struct{}{}
+				m[n] = 1
 			}
 
 			f.Insert([]byte(test.s))
 
-			for n := 0; n < 8*len(f.f); n++ {
-				_, ok := m[n]
-				var want int
-				if ok {
-					want = 1
-				}
-				if got := f.bit(n); got != want {
+			for n := 0; n < len(f.f)*8; n++ {
+				if got, want := f.bit(n), m[n]; got != want {
 					t.Errorf("TestInsert(%v, k=%v, \"%v\", bit %x): got %v, want %v", len(f.f), f.k, test.s, n, got, want)
 				}
 			}
