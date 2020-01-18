@@ -9,7 +9,6 @@ var bitTests = []struct {
 	f   *Filter
 	ins []int
 }{
-	{&Filter{}, []int{}},
 	{&Filter{f: []byte{0}}, make([]int, 0)},
 	{&Filter{f: []byte{1}}, []int{0}},
 	{&Filter{f: []byte{2}}, []int{1}},
@@ -45,7 +44,7 @@ func TestBit(t *testing.T) {
 
 func TestSetBit(t *testing.T) {
 	for _, test := range bitTests {
-		f := New(len(test.f.f), 0)
+		f := New(len(test.f.f), 1)
 		for _, i := range test.ins {
 			f.setBit(i)
 		}
@@ -133,13 +132,13 @@ var marshalTests = []struct {
 	f    *Filter
 	data []byte
 }{
-	{New(1, 0), []byte{0, 0}},
+	{New(1, 1), []byte{0, 1}},
 	{New(1, 1), []byte{0, 1}},
 	{New(4, 1), []byte{0, 0, 0, 0, 1}},
 	{New(4, 3), []byte{0, 0, 0, 0, 3}},
 	{&Filter{f: []byte{255}, k: 4}, []byte{255, 4}},
 	{&Filter{f: []byte{15, 23}, k: 4}, []byte{15, 23, 4}},
-	{&Filter{f: []byte{0, 1, 1, 2, 3, 5, 8}, k: 13}, []byte{0, 1, 1, 2, 3, 5, 8, 13}},
+	{&Filter{f: []byte{1, 0, 1, 1, 2, 3, 5, 8}, k: 13}, []byte{1, 0, 1, 1, 2, 3, 5, 8, 13}},
 }
 
 func TestMarshalBinary(t *testing.T) {

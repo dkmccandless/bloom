@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"math/bits"
 )
 
 // Filter represents a Bloom filter. Filter satisfies the encoding.BinaryMarshaler and BinaryUnmarshaler interfaces.
@@ -28,7 +29,19 @@ func (f *Filter) setBit(n int) {
 }
 
 // New returns a Filter of size b bytes that uses k hash values.
-func New(b, k int) *Filter { return &Filter{make([]byte, b), k} }
+// b must be a power of 2 in the range [1, 8192] and k must be in the range [1, 16].
+func New(b, k int) *Filter {
+	if b <= 0 || b > 8192 {
+		panic("New: Filter size out of range")
+	}
+	if bits.OnesCount(uint(b)) != 1 {
+		panic("New: Filter size not a power of 2")
+	}
+	if k <= 0 || k > 16 {
+		panic("New: Number of hash values out of range")
+	}
+	return &Filter{make([]byte, b), k}
+}
 
 // Insert inserts data into f's set.
 func (f *Filter) Insert(data []byte) {
