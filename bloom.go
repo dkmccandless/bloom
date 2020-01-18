@@ -5,8 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"log"
-	"math/bits"
 )
 
 // Filter represents a Bloom filter. Filter satisfies the encoding.BinaryMarshaler and BinaryUnmarshaler interfaces.
@@ -29,16 +27,6 @@ func (f *Filter) setBit(n int) {
 	f.f[b] |= 1 << uint(i)
 }
 
-// hashBits returns the base 2 logarithm of the size of the filter in bits.
-// This is the number of hash bits required to index any bit in the filter.
-// TODO: Handle filter size not a power of 2
-func (f *Filter) hashBits() int {
-	if bits.OnesCount(uint(len(f.f))) != 1 {
-		log.Fatal("hashBits: filter size not a power of 2")
-	}
-	return bits.TrailingZeros64(uint64(len(f.f)) * 8)
-}
-
 // New returns a Filter of size b bytes that uses k hash values.
 func New(b, k int) *Filter { return &Filter{make([]byte, b), k} }
 
@@ -48,8 +36,8 @@ func (f *Filter) Insert(data []byte) {
 	for h := 0; h < f.k; h++ {
 		// i is constructed from two bytes, limiting filter size to 2^16 bits.
 		// The factor of 2 also limits f.k to 16 hash values.
-		i := binary.BigEndian.Uint16(hash[2*h:]) & (1<<uint(f.hashBits()) - 1)
-		f.setBit(int(i))
+		i := int(binary.BigEndian.Uint16(hash[2*h:])) & (len(f.f)*8 - 1)
+		f.setBit(i)
 	}
 }
 
@@ -61,7 +49,7 @@ func (f *Filter) Contains(data []byte) bool {
 	for h := 0; h < f.k; h++ {
 		// i is constructed from two bytes, limiting filter size to 2^16 bits.
 		// The factor of 2 also limits f.k to 16 hash values.
-		i := binary.BigEndian.Uint16(hash[2*h:]) & (1<<uint(f.hashBits()) - 1)
+		i := int(binary.BigEndian.Uint16(hash[2*h:])) & (len(f.f)*8 - 1)
 		if f.bit(int(i)) == 0 {
 			return false
 		}

@@ -87,11 +87,8 @@ func TestInsert(t *testing.T) {
 			// Construct a map of precisely the bits that should be set
 			m := make(map[int]struct{})
 			for i := 0; i < f.k; i++ {
-				n := test.h[i]
-				if hashBits := f.hashBits(); hashBits < 16 {
-					n &= 1<<uint(hashBits) - 1
-				}
-				m[int(n)] = struct{}{}
+				n := int(test.h[i]) & (len(f.f)*8 - 1)
+				m[n] = struct{}{}
 			}
 
 			f.Insert([]byte(test.s))
