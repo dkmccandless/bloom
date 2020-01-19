@@ -64,7 +64,7 @@ func (f *Filter) MaybeContains(item []byte) bool {
 		// SHA-256 hashes are 32 bytes long, so constructing i from a pair of bytes yields a maximum of 16 hash values,
 		// each indexing a filter of size at most 65536 bits.
 		i := int(binary.BigEndian.Uint16(hash[2*h:])) & (len(f.f)*8 - 1)
-		if f.bit(int(i)) == 0 {
+		if f.bit(i) == 0 {
 			return false
 		}
 	}
