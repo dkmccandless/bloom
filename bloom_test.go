@@ -26,16 +26,13 @@ var bitTests = []struct {
 
 func TestBit(t *testing.T) {
 	for _, test := range bitTests {
-		m := make(map[int]struct{})
+		// Construct a map of precisely the bits that should be set
+		m := make(map[int]int)
 		for _, n := range test.ins {
-			m[n] = struct{}{}
+			m[n] = 1
 		}
 		for n := 0; n < len(test.f.f)*8; n++ {
-			var want int
-			if _, ok := m[n]; ok {
-				want = 1
-			}
-			if got := test.f.bit(n); got != want {
+			if got, want := test.f.bit(n), m[n]; got != want {
 				t.Errorf("TestBit(%v, %v, %v): got %v, want %v", test.f.f, test.ins, n, got, want)
 			}
 		}
