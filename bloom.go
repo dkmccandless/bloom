@@ -20,7 +20,7 @@ type Filter struct {
 // bit returns the filter's nth bit.
 func (f *Filter) bit(n int) int {
 	b, i := n/8, n%8
-	return int(f.f[b]>>uint(i)) & 1
+	return int(f.f[b]) >> uint(i) & 1
 }
 
 // setBit sets the filter's nth bit to 1.
