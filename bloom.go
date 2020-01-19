@@ -5,8 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"math/bits"
+)
+
+const (
+	// SHA-256 hashes are 32 bytes long, so constructing each hash value from a pair of bytes
+	// yields a maximum of 16 hash values, each indexing a filter of size at most 65536 bits.
+	maxFilterSize = 8192 // == 65536 bits
+	maxHashValues = 16
 )
 
 // Filter is a Bloom filter, which represents a set of items and provides a probabilistic test for membership.
@@ -32,14 +38,14 @@ func (f *Filter) setBit(n int) {
 // New returns a Filter of size b bytes that uses k hash values.
 // It panics if b is not a power of 2 in the range [1, 8192] or k is not in the range [1, 16].
 func New(b, k int) *Filter {
-	if b <= 0 || b > 8192 {
-		panic("New: Filter size out of range")
+	if b <= 0 || b > maxFilterSize {
+		panic("bloom: filter size out of range")
 	}
 	if bits.OnesCount(uint(b)) != 1 {
-		panic("New: Filter size not a power of 2")
+		panic("bloom: filter size not a power of 2")
 	}
-	if k <= 0 || k > 16 {
-		panic("New: Number of hash values out of range")
+	if k <= 0 || k > maxHashValues {
+		panic("bloom: number of hash values out of range")
 	}
 	return &Filter{make([]byte, b), k}
 }
@@ -72,7 +78,7 @@ func hashBits(item []byte) []int {
 	hash := sha256.Sum256(item)
 	// SHA-256 hashes are 32 bytes long, so constructing i from a pair of bytes yields a maximum of 16 hash values,
 	// each indexing a filter of size at most 65536 bits.
-	b := make([]int, 16)
+	b := make([]int, maxHashValues)
 	for i := 0; i < len(b); i++ {
 		b[i] = int(binary.BigEndian.Uint16(hash[2*i:]))
 	}
@@ -97,14 +103,17 @@ func (f *Filter) MarshalBinary() ([]byte, error) {
 func (f *Filter) UnmarshalBinary(data []byte) error {
 	l := len(data)
 	if l == 0 {
-		return errors.New("UnmarshalBinary: empty data slice")
+		return errors.New("empty data slice")
+	}
+	if l-1 <= 0 || l-1 > maxFilterSize {
+		return errors.New("filter size out of range")
 	}
 	if bits.OnesCount(uint(l-1)) != 1 {
-		return fmt.Errorf("UnmarshalBinary: Filter size %v bytes not a power of 2", l-1)
+		return errors.New("filter size not a power of 2")
 	}
 	k := int(data[l-1])
-	if k <= 0 || k > 16 {
-		panic("UnmarshalBinary: Number of hash values out of range")
+	if k <= 0 || k > maxHashValues {
+		panic("number of hash values out of range")
 	}
 	f.f = make([]byte, l-1)
 	copy(f.f, data[:l-1])
