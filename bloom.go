@@ -46,12 +46,10 @@ func New(b, k int) *Filter {
 
 // Insert inserts item into f's set.
 func (f *Filter) Insert(item []byte) {
-	hash := sha256.Sum256(item)
-	for h := 0; h < f.k; h++ {
-		// SHA-256 hashes are 32 bytes long, so constructing i from a pair of bytes yields a maximum of 16 hash values,
-		// each indexing a filter of size at most 65536 bits.
-		i := int(binary.BigEndian.Uint16(hash[2*h:])) & (len(f.f)*8 - 1)
-		f.setBit(i)
+	h := hashBits(item)
+	for i := 0; i < f.k; i++ {
+		in := h[i] & (len(f.f)*8 - 1)
+		f.setBit(in)
 	}
 }
 
@@ -59,16 +57,26 @@ func (f *Filter) Insert(item []byte) {
 // If MaybeContains returns true, a false positive is possible,
 // but if MaybeContains returns false, item is definitely not in the set.
 func (f *Filter) MaybeContains(item []byte) bool {
-	hash := sha256.Sum256(item)
-	for h := 0; h < f.k; h++ {
-		// SHA-256 hashes are 32 bytes long, so constructing i from a pair of bytes yields a maximum of 16 hash values,
-		// each indexing a filter of size at most 65536 bits.
-		i := int(binary.BigEndian.Uint16(hash[2*h:])) & (len(f.f)*8 - 1)
-		if f.bit(i) == 0 {
+	h := hashBits(item)
+	for i := 0; i < f.k; i++ {
+		in := h[i] & (len(f.f)*8 - 1)
+		if f.bit(in) == 0 {
 			return false
 		}
 	}
 	return true
+}
+
+// hashBits returns a slice of ints consisting of pairs of bytes from the SHA-256 hash of item.
+func hashBits(item []byte) []int {
+	hash := sha256.Sum256(item)
+	// SHA-256 hashes are 32 bytes long, so constructing i from a pair of bytes yields a maximum of 16 hash values,
+	// each indexing a filter of size at most 65536 bits.
+	b := make([]int, 16)
+	for i := 0; i < len(b); i++ {
+		b[i] = int(binary.BigEndian.Uint16(hash[2*i:]))
+	}
+	return b
 }
 
 // MarshalBinary marshals f into a binary form. It satisfies the encoding.BinaryMarshaler interface.
