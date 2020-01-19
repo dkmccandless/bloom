@@ -74,7 +74,10 @@ func (f *Filter) MaybeContains(item []byte) bool {
 // MarshalBinary marshals f into a binary form. It satisfies the encoding.BinaryMarshaler interface.
 func (f *Filter) MarshalBinary() ([]byte, error) {
 	// The filter, followed by the number of hash values expressed as a single byte
-	return append(f.f, byte(f.k)), nil
+	b := make([]byte, len(f.f)+1)
+	copy(b, f.f)
+	b[len(f.f)] = byte(f.k)
+	return b, nil
 }
 
 // UnmarshalBinary unmarshals a binary representation of a Filter and stores the representation in f.
@@ -95,7 +98,8 @@ func (f *Filter) UnmarshalBinary(data []byte) error {
 	if k <= 0 || k > 16 {
 		panic("UnmarshalBinary: Number of hash values out of range")
 	}
-	f.f = append(make([]byte, 0, l-1), data[:l-1]...)
+	f.f = make([]byte, l-1)
+	copy(f.f, data[:l-1])
 	f.k = k
 	return nil
 }
